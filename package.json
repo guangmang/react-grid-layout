@@ -1,0 +1,142 @@
+{
+  "name": "react-grid-layout",
+  "version": "1.5.1",
+  "description": "A draggable and resizable grid layout with responsive breakpoints, for React.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npm run flow && eslint .",
+    "test": "jest --coverage",
+    "test-watch": "jest --watch",
+    "test-update-snapshots": "jest --updateSnapshot",
+    "clean": "node -e \"const fs=require('fs'); for (const dir of ['build','dist']) fs.rmSync(dir,{recursive:true,force:true});\"",
+    "clean-example": "node -e \"const fs=require('fs'); const path=require('path'); for (const file of fs.readdirSync('examples')) if (/\\.(?:js|html)$/.test(file)) fs.rmSync(path.join('examples', file), {force:true});\"",
+    "build": "npm run clean && npm run build-js && npm run build-dist",
+    "build-js": "babel --out-dir ./build ./lib",
+    "build-dist": "webpack",
+    "build-example": "npm run build && npm run clean-example && webpack --config webpack-examples.config.js && node ./examples/util/generate.js",
+    "view-example": "npm run build-example && webpack serve --config webpack-examples.config.js --progress",
+    "dev": "webpack serve --config webpack-dev-server.config.js --hot --progress",
+    "prepublishOnly": "npm run build",
+    "validate": "npm ls",
+    "flow": "flow",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "release:patch": "npm run build && npm run lint && npm test && npm version patch && npm pack --dry-run",
+    "release:minor": "npm run build && npm run lint && npm test && npm version minor && npm pack --dry-run",
+    "release:major": "npm run build && npm run lint && npm test && npm version major && npm pack --dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:STRML/react-grid-layout.git"
+  },
+  "keywords": [
+    "react",
+    "grid",
+    "drag",
+    "draggable",
+    "resize",
+    "resizable",
+    "fluid",
+    "responsive"
+  ],
+  "author": "Samuel Reed <samuel.trace.reed@gmail.com> (http://strml.net/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/STRML/react-grid-layout/issues"
+  },
+  "homepage": "https://github.com/STRML/react-grid-layout",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "fast-equals": "^6.0.0",
+    "prop-types": "^15.8.1",
+    "react-draggable": "^4.6.0",
+    "react-resizable": "^4.0.1",
+    "resize-observer-polyfill": "^1.5.1"
+  },
+  "_dependencyNotes": {
+    "fast-equals": "Bug in CRA5 causes fast-equals@5 to fail to import due to .cjs file. See https://github.com/react-grid-layout/react-grid-layout/issues/1904"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.29.7",
+    "@babel/core": "^7.29.7",
+    "@babel/eslint-parser": "^7.29.7",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-transform-flow-comments": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-flow": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/register": "^7.29.7",
+    "@cfaester/enzyme-adapter-react-18": "^0.8.0",
+    "@eslint/js": "^9.39.4",
+    "@webpack-cli/serve": "^3.0.1",
+    "babel-jest": "^30.4.1",
+    "babel-loader": "^10.1.1",
+    "babel-plugin-preval": "^5.1.0",
+    "css-loader": "^7.1.4",
+    "ejs": "^6.0.1",
+    "enzyme": "^3.11.0",
+    "enzyme-to-json": "^3.6.2",
+    "eslint": "^9.39.4",
+    "@eslint/js": "^9.39.4",
+    "eslint-plugin-mocha": "^11.3.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-unicorn": "^64.0.0",
+    "exports-loader": "^5.0.0",
+    "flow-bin": "^0.316.0",
+    "globals": "^16.6.0",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "imports-loader": "^5.0.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "lint-staged": "^17.0.7",
+    "lodash": "^4.18.1",
+    "opener": "^1.5.2",
+    "prettier": "^3.8.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "style-loader": "^4.0.0",
+    "timsort": "^0.3.0",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.4"
+  },
+  "peerDependencies": {
+    "react": ">= 18.0.0",
+    "react-dom": ">= 18.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>test/util/setupTests.js"
+    ],
+    "snapshotSerializers": [
+      "enzyme-to-json/serializer"
+    ],
+    "testMatch": [
+      "<rootDir>/test/spec/*.js"
+    ],
+    "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "url": "http://localhost"
+    },
+    "coverageThreshold": {
+      "global": {
+        "statements": 77,
+        "branches": 72,
+        "functions": 77,
+        "lines": 78
+      }
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix"
+    ],
+    "*": [
+      "prettier --ignore-unknown --write"
+    ]
+  }
+}
