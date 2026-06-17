@@ -1,9 +1,8 @@
 // @flow
 /* eslint-env jest */
 
-import React from "react";
+import React, { act } from "react";
 import _ from "lodash";
-import TestUtils from "react-dom/test-utils";
 import ReactGridLayout from "../../lib/ReactGridLayout";
 import { calcGridItemPosition } from "../../lib/calculateUtils";
 import GridItem from "../../lib/GridItem";
@@ -192,7 +191,7 @@ describe("Lifecycle tests", function () {
             onDrag={mockOnDrag}
           />
         );
-        TestUtils.act(() => {
+        act(() => {
           renderedItem.setState({ dragging: true });
           renderedItem.setProps({
             droppingPosition: { left: 700, top: 300, e: {} }
@@ -353,18 +352,19 @@ describe("Lifecycle tests", function () {
     describe("Droppability", function () {
       function dragDroppableTo(wrapper, x, y) {
         const gridLayout = wrapper.find("ReactGridLayout");
-        const droppable = wrapper.find(".droppable-element");
+        const gridNode = gridLayout.getDOMNode();
+        gridNode.getBoundingClientRect = () => ({ left: 0, top: 0 });
 
-        TestUtils.Simulate.dragOver(gridLayout.getDOMNode(), {
-          currentTarget: {
-            getBoundingClientRect: () => ({ left: 0, top: 0 })
-          },
-          clientX: x,
-          clientY: y,
-          nativeEvent: {
-            target: droppable.getDOMNode()
-          }
+        act(() => {
+          const event = new MouseEvent("dragover", {
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y
+          });
+          gridNode.dispatchEvent(event);
         });
+        wrapper.update();
       }
       it("Updates when an item is dropped in", function () {
         const wrapper = mount(<DroppableLayout containerPadding={[0, 0]} />);
@@ -472,6 +472,7 @@ describe("Lifecycle tests", function () {
       const rowHeight = 30;
       const colWidth = 101;
       const gridPadding = 10;
+      let wrapper;
       let gridLayout;
 
       /**
@@ -482,16 +483,23 @@ describe("Lifecycle tests", function () {
        *
        * Taken from: https://github.com/react-grid-layout/react-draggable/blob/master/specs/draggable.spec.jsx#L1000C1-L1003C70
        */
-      const mouseMove = (node, x, y) => {
-        const doc = node ? node.ownerDocument : document;
-        const mouseEvent = new MouseEvent("mousemove", {
+      const mouseEvent = (type, node, x, y) => {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
           button: 0,
+          buttons: type === "mouseup" ? 0 : 1,
           clientX: x,
           clientY: y,
           screenX: 0,
           screenY: 0
         });
-        doc.dispatchEvent(mouseEvent);
+        node.dispatchEvent(event);
+      };
+
+      const mouseMove = (node, x, y) => {
+        const doc = node ? node.ownerDocument : document;
+        mouseEvent("mousemove", doc, x, y);
       };
 
       const getCurrentPosition = wrapper => {
@@ -512,18 +520,24 @@ describe("Lifecycle tests", function () {
         );
       };
 
-      const resizeTo = (wrapper, preventMouseUp, currentPosition, x, y) => {
-        const node = wrapper.getDOMNode();
-        TestUtils.Simulate.mouseDown(node, {
-          clientX: currentPosition.left,
-          clientY: currentPosition.top
-        });
-        mouseMove(node, x, y);
+      const resizeTo = (handleWrapper, preventMouseUp, currentPosition, x, y) => {
+        const node = handleWrapper.getDOMNode();
+        act(() => {
+          mouseEvent(
+            "mousedown",
+            node,
+            currentPosition.left,
+            currentPosition.top
+          );
+          mouseMove(node, x, y);
 
-        // In some test cases we want to take measurements before mouseUp occurs
-        if (!preventMouseUp) {
-          TestUtils.Simulate.mouseUp(node);
-        }
+          // In some test cases we want to take measurements before mouseUp occurs
+          if (!preventMouseUp) {
+            mouseEvent("mouseup", node.ownerDocument, x, y);
+          }
+        });
+        wrapper.update();
+        gridLayout = wrapper.find("ReactGridLayout").first();
       };
 
       const findGridItemByText = (wrapper, id) =>
@@ -541,8 +555,8 @@ describe("Lifecycle tests", function () {
         wrapper.state("layout").find(item => item.i == id);
 
       beforeEach(() => {
-        const wrapper = mount(<ResizableLayout />);
-        gridLayout = wrapper.find("ReactGridLayout");
+        wrapper = mount(<ResizableLayout />);
+        gridLayout = wrapper.find("ReactGridLayout").first();
       });
 
       it("sets up resizable handles", () => {
